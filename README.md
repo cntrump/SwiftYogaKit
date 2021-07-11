@@ -6,7 +6,15 @@ Dependency on [yoga](https://github.com/cntrump/yoga).
 
 ## Install
 
+### SPM (Swift Package Manager)
+
 package respository URL: https://github.com/cntrump/SwiftYogaKit.git
+
+### Carthage
+
+```
+github "cntrump/SwiftYogaKit" ~> 1.0.0
+```
 
 ## Usage
 

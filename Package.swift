@@ -12,18 +12,34 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "SwiftYogaKit",
-            targets: ["SwiftYogaKit"])
-    ],
-    dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/cntrump/yoga.git", from: "1.19.1"),
+            targets: ["SwiftYogaKit"]),
+        .library(
+            name: "Yoga",
+            targets: ["Yoga"])
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "SwiftYogaKit",
-            dependencies: ["Yoga"])
+            dependencies: ["Yoga"],
+            path: ".",
+            sources: ["Sources/SwiftYogaKit"]),
+        .target(
+            name: "Yoga",
+            path: ".",
+            sources: ["Sources/yoga/yoga"],
+            publicHeadersPath: "Sources/yoga/yoga/include",
+            cSettings: [
+                .headerSearchPath("Sources/yoga")
+            ]),
+        .testTarget(
+            name: "Tests",
+            dependencies: ["SwiftYogaKit"],
+            path: ".",
+            sources: ["Tests"])
     ],
-    swiftLanguageVersions: [.v5]
+    swiftLanguageVersions: [.v5],
+    cLanguageStandard: .gnu11,
+    cxxLanguageStandard: .gnucxx14
 )

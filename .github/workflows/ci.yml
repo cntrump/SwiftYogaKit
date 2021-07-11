@@ -3,13 +3,35 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  Apple:
+  SPM:
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install yoga
+        run: git submodule init && git submodule update
       - name: Test building for iOS
         run: xcodebuild -scheme SwiftYogaKit -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11'
       - name: Test building for tvOS
         run: xcodebuild -scheme SwiftYogaKit -sdk appletvsimulator -destination 'platform=tvOS Simulator,name=Apple TV'
       - name: Test building for macOS (x86_64 & arm64)
         run: xcodebuild -scheme SwiftYogaKit -sdk macosx -arch x86_64 -arch arm64
+      - name: Unit Tests for iOS
+        run: xcodebuild -scheme SwiftYogaKit -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11' clean test
+      - name: Unit Tests for macOS
+        run: swift test
+  Xcodeproj:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install yoga
+        run: git submodule init && git submodule update
+      - name: Test building xcodeproj for iOS
+        run: xcodebuild -project SwiftYogaKit.xcodeproj -scheme SwiftYogaKit -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11' clean build
+      - name: Test building xcodeproj for tvOS
+        run: xcodebuild -project SwiftYogaKit.xcodeproj -scheme SwiftYogaKit -sdk appletvsimulator -destination 'platform=tvOS Simulator,name=Apple TV' clean build
+      - name: Test building xcodeproj for macOS (x86_64 & arm64)
+        run: xcodebuild -project SwiftYogaKit.xcodeproj -scheme SwiftYogaKit -sdk macosx -arch x86_64 -arch arm64 clean build
+      - name: Unit Tests for iOS
+        run: xcodebuild -project SwiftYogaKit.xcodeproj -scheme SwiftYogaKit -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 11' clean test
+      - name: Unit Tests for macOS
+        run: xcodebuild -project SwiftYogaKit.xcodeproj -scheme SwiftYogaKit -sdk macosx -arch x86_64 -arch arm64 clean test

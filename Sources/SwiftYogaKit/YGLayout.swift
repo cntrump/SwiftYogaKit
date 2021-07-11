@@ -13,8 +13,6 @@ import UIKit
 
 import Yoga
 
-public typealias YGLayoutConfigurationBlock = ((YGLayout) -> Void)
-
 public struct YGDimensionFlexibility: OptionSet {
 
     public let rawValue: Int
@@ -23,9 +21,9 @@ public struct YGDimensionFlexibility: OptionSet {
         self.rawValue = rawValue
     }
 
-    static let width = YGDimensionFlexibility(rawValue: 1 << 0)
+    public static let width = YGDimensionFlexibility(rawValue: 1 << 0)
 
-    static let height = YGDimensionFlexibility(rawValue: 1 << 1)
+    public static let height = YGDimensionFlexibility(rawValue: 1 << 1)
 }
 
 final public class YGLayout {
@@ -168,11 +166,11 @@ final public class YGLayout {
         YGAttachNodesFromViewHierachy(view)
         YGNodeCalculateLayout(node, Double(size.width), Double(size.height), YGNodeStyleGetDirection(node))
 
-        return CGSize(width: CGFloat(node.width), height: CGFloat(node.height))
+        return CGSize(width: node.width, height: node.height)
     }
 
-    @inlinable public func configureLayout(block: YGLayoutConfigurationBlock) {
-        block(self)
+    @inlinable public func configureLayout(block: ((YGLayout) -> Void)?) {
+        block?(self)
     }
 }
 
@@ -234,25 +232,29 @@ extension YGNodeRef {
 
     @inlinable var top: CGFloat {
         get {
-            return CGFloat(YGNodeLayoutGetTop(self))
+            let top = CGFloat(YGNodeLayoutGetTop(self))
+            return top.isInfinite || top.isNaN ? 0 : top
         }
     }
 
     @inlinable var left: CGFloat {
         get {
-            return CGFloat(YGNodeLayoutGetLeft(self))
+            let left = CGFloat(YGNodeLayoutGetLeft(self))
+            return left.isInfinite || left.isNaN ? 0 : left
         }
     }
 
     @inlinable var width: CGFloat {
         get {
-            return CGFloat(max(YGNodeLayoutGetWidth(self), 0))
+            let width = CGFloat(YGNodeLayoutGetWidth(self))
+            return width.isInfinite || width.isNaN ? 0 : max(width, 0)
         }
     }
 
     @inlinable var height: CGFloat {
         get {
-            return CGFloat(max(YGNodeLayoutGetHeight(self), 0))
+            let height = CGFloat(YGNodeLayoutGetHeight(self))
+            return height.isInfinite || height.isNaN ? 0 : max(height, 0)
         }
     }
 }

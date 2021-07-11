@@ -15,6 +15,10 @@ import ObjectiveC.runtime
 
 private var kYGYogaAssociatedKey: UInt8 = 0
 
+#if os(macOS)
+private var kYGNSViewFittingSizeAssociatedKey: UInt8 = 0
+#endif
+
 extension UIView {
 
     public var yoga: YGLayout {
@@ -35,4 +39,20 @@ extension UIView {
 
         return yoga != nil
     }
+
+    #if os(macOS)
+    var _swift_yoga_isFittingSize: Bool {
+        get {
+            guard let isFittingSize = objc_getAssociatedObject(self, &kYGNSViewFittingSizeAssociatedKey) as? NSNumber else {
+                return false
+            }
+
+            return isFittingSize.boolValue
+        }
+
+        set {
+            objc_setAssociatedObject(self, &kYGNSViewFittingSizeAssociatedKey, NSNumber(value: newValue), .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+    #endif
 }

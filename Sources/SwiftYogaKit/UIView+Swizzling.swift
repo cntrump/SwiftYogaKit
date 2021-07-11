@@ -33,47 +33,6 @@ private func YogaSwizzleInstanceMethod(_ cls: AnyClass, _ originalSelector: Sele
     }
 }
 
-private extension CGRect {
-    @inline(__always) var isStandlized: Bool {
-        let x = minX, y = minY, w = width, h = height
-
-        return !(x.isNaN || x.isInfinite ||
-                 y.isNaN || y.isInfinite ||
-                 w.isNaN || w.isInfinite ||
-                 h.isNaN || h.isInfinite)
-    }
-
-    @inline(__always) var standlized: CGRect {
-        get {
-            if isStandlized {
-                return self
-            }
-
-            let x = minX, y = minY
-            var origin = self.origin
-            origin.x = x.isNaN || x.isInfinite ? 0 : x
-            origin.y = y.isNaN || y.isInfinite ? 0 : y
-
-            let w = width, h = height
-            var size = self.size
-            size.width = w.isNaN || w.isInfinite ? 0 : w
-            size.height = h.isNaN || h.isInfinite ? 0 : h
-
-            return CGRect(origin: origin, size: size)
-        }
-    }
-}
-
-#if os(macOS)
-private extension CGSize {
-    @inline(__always) var standlized: CGSize {
-        get {
-            return CGRect(origin: .zero, size: self).standlized.size
-        }
-    }
-}
-#endif
-
 private var kYGYogaMaxLayoutWidthAssociatedKey: UInt8 = 0
 
 extension UIView {
@@ -117,31 +76,35 @@ extension UIView {
     }
 
     @objc dynamic func _swift_yoga_init(frame: CGRect) -> Any? {
-        let instance = _swift_yoga_init(frame: frame.standlized)
+        let instance = _swift_yoga_init(frame: frame)
         _swift_yoga_apply_layout()
 
         return instance
     }
 
     @objc dynamic func _swift_yoga_set(frame: CGRect) {
-        let rect = frame.standlized
-        _swift_yoga_set(frame: rect)
+        _swift_yoga_set(frame: frame)
         _swift_yoga_apply_layout()
 
         #if os(macOS)
-        _swift_yoga_updateConstraintsIfNeeded(rect.width)
+        _swift_yoga_updateConstraintsIfNeeded(frame.width)
         #endif
     }
 
     @objc dynamic func _swift_yoga_set(bounds: CGRect) {
-        let rect = bounds.standlized
-        _swift_yoga_set(bounds: rect)
+        _swift_yoga_set(bounds: bounds)
         _swift_yoga_apply_layout()
-        _swift_yoga_updateConstraintsIfNeeded(rect.width)
+        _swift_yoga_updateConstraintsIfNeeded(bounds.width)
     }
 
     @objc dynamic var _swift_yoga_intrinsicContentSize: CGSize {
         var size = self._swift_yoga_intrinsicContentSize
+
+        #if os(macOS)
+        guard !_swift_yoga_isFittingSize else {
+            return size
+        }
+        #endif
 
         guard isYogaEnabled else {
             return size
@@ -155,26 +118,23 @@ extension UIView {
             }
 
             size = yoga.calculateLayout(size: CGSize(width: maxWidth, height: .nan))
+            self._swift_yoga_maxLayoutWidth = size.width
         }
-
-        self._swift_yoga_maxLayoutWidth = size.width
 
         return size
     }
 
     #if os(macOS)
     @objc dynamic func _swift_yoga_set(frameSize: NSSize) {
-        let size = frameSize.standlized
-        _swift_yoga_set(frameSize: size)
+        _swift_yoga_set(frameSize: frameSize)
         _swift_yoga_apply_layout()
-        _swift_yoga_updateConstraintsIfNeeded(size.width)
+        _swift_yoga_updateConstraintsIfNeeded(frameSize.width)
     }
 
     @objc dynamic func _swift_yoga_set(boundsSize: NSSize) {
-        let size = boundsSize.standlized
-        _swift_yoga_set(boundsSize: size)
+        _swift_yoga_set(boundsSize: boundsSize)
         _swift_yoga_apply_layout()
-        _swift_yoga_updateConstraintsIfNeeded(size.width)
+        _swift_yoga_updateConstraintsIfNeeded(boundsSize.width)
     }
     #endif
 
@@ -190,12 +150,12 @@ extension UIView {
     }
 
     func _swift_yoga_updateConstraintsIfNeeded(_ width: CGFloat) {
-        guard _swift_yoga_isAutoLayoutEnabled else {
+        guard isYogaEnabled, _swift_yoga_isAutoLayoutEnabled else {
             return
         }
 
         let maxWidth = self._swift_yoga_maxLayoutWidth
-        if maxWidth.isNaN || maxWidth != width {
+        if maxWidth != width {
             self._swift_yoga_maxLayoutWidth = width
             invalidateIntrinsicContentSize()
             #if !os(macOS)

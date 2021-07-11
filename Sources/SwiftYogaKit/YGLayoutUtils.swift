@@ -66,7 +66,9 @@ func YGMeasureView(_ node: YGNodeRef!, _ width: Double, _ widthMode: YGMeasureMo
     }
 
     #if os(macOS)
+    view._swift_yoga_isFittingSize = true
     let fittingSize = view.fittingSize
+    view._swift_yoga_isFittingSize = false
     let sizeThatFits = CGSize(width: min(fittingSize.width, constrainedWidth), height: min(fittingSize.height, constrainedHeight))
     #else
     let sizeThatFits = view.sizeThatFits(CGSize(width: constrainedWidth, height: constrainedHeight))
@@ -145,8 +147,8 @@ func YGApplyLayoutToViewHierarchy(_ view: UIView, _ preserveOrigin: Bool) {
     }
     
     let node = yoga.node
-    let topLeft = CGPoint(x: CGFloat(node.left), y: CGFloat(node.top))
-    let size = CGSize(width: CGFloat(node.width), height: CGFloat(node.height))
+    let topLeft = CGPoint(x: node.left, y: node.top)
+    let size = CGSize(width: node.width, height: node.height)
     var origin = CGPoint.zero
 
     #if os(macOS)
@@ -168,7 +170,7 @@ func YGApplyLayoutToViewHierarchy(_ view: UIView, _ preserveOrigin: Bool) {
     if let superview = view.superview, !superview.isFlipped, superview.isYogaEnabled {
         let yoga = superview.yoga
         if yoga.isIncludedInLayout {
-            let height = max(CGFloat(yoga.node.height), 0)
+            let height = max(yoga.node.height, 0)
             frame.origin.y = height - frame.maxY
         }
     }
